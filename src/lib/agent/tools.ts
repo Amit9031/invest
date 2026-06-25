@@ -18,6 +18,9 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
   if (tavilyApiKey) {
     try {
       console.log(`Searching Tavily for: "${query}"`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
       const response = await fetch("https://api.tavily.com/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -26,7 +29,10 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
           query: query,
           max_results: 5,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -47,11 +53,17 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
   try {
     console.log(`Searching DuckDuckGo (No-Key Fallback) for: "${query}"`);
     const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
     const response = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       },
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`DDG HTML search returned status ${response.status}`);

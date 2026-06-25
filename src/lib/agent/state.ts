@@ -35,7 +35,24 @@ export const ResearchStateAnnotation = Annotation.Root({
     reducer: (x, y) => x.concat(y),
     default: () => [],
   }),
-  currentAgent: Annotation<string>,
+  currentAgent: Annotation<string>({
+    reducer: (x, y) => {
+      if (!x) return y;
+      if (!y) return x;
+      const order = ["tickerMatcher", "financialAnalyst", "webResearcher", "riskAnalyst", "investmentCommittee", "Complete"];
+      const normalize = (name: string) => {
+        if (name === "Financial Analyst") return "financialAnalyst";
+        if (name === "Web News Researcher" || name === "Web Researcher") return "webResearcher";
+        if (name === "Risk Analyst") return "riskAnalyst";
+        if (name === "Investment Committee") return "investmentCommittee";
+        return name;
+      };
+      const normX = normalize(x);
+      const normY = normalize(y);
+      return order.indexOf(normY) > order.indexOf(normX) ? y : x;
+    },
+    default: () => "tickerMatcher",
+  }),
 });
 
 export type ResearchState = typeof ResearchStateAnnotation.State;
