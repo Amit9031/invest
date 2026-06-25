@@ -12,13 +12,14 @@ import {
 
 interface AgentMonitorProps {
   currentAgent: string; // "tickerMatcher" | "financialAnalyst" | "webResearcher" | "riskAnalyst" | "investmentCommittee" | "Complete" | ""
+  completedNodes: string[];
   logs: Array<{ timestamp: string; agent: string; message: string; type?: "info" | "success" | "system" }>;
   isPublic: boolean | null;
   ticker: string;
   status: "idle" | "running" | "completed" | "error";
 }
 
-export default function AgentMonitor({ currentAgent, logs, isPublic, ticker, status }: AgentMonitorProps) {
+export default function AgentMonitor({ currentAgent, completedNodes = [], logs, isPublic, ticker, status }: AgentMonitorProps) {
   const consoleEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll console to bottom when new logs arrive
@@ -79,17 +80,28 @@ export default function AgentMonitor({ currentAgent, logs, isPublic, ticker, sta
       return "completed";
     }
 
-    if (currentAgent === stepId) {
-      return "active";
+    if (completedNodes.includes(stepId)) {
+      return "completed";
     }
 
-    // Determine if it was completed by comparing execution order
-    const agentOrder = ["tickerMatcher", "financialAnalyst", "webResearcher", "riskAnalyst", "investmentCommittee", "Complete"];
-    const currentIdx = agentOrder.indexOf(currentAgent);
-    const stepIdx = agentOrder.indexOf(stepId);
-
-    if (currentIdx > stepIdx) {
-      return "completed";
+    // Determine if it is currently active.
+    const isTickerMatcherCompleted = completedNodes.includes("tickerMatcher");
+    if (isTickerMatcherCompleted) {
+      if (stepId === "investmentCommittee") {
+        // Investment committee is active only if all preceding non-skipped nodes are completed.
+        const precedingSteps = steps.slice(1, 4); // financialAnalyst, webResearcher, riskAnalyst
+        const allPrecedingDone = precedingSteps.every(s => s.skipCondition || completedNodes.includes(s.id));
+        return allPrecedingDone ? "active" : "";
+      }
+      // If it's one of the parallel nodes, it is active if it's not completed yet.
+      if (["financialAnalyst", "webResearcher", "riskAnalyst"].includes(stepId)) {
+        return "active";
+      }
+    } else {
+      // If tickerMatcher is not completed, it is active.
+      if (stepId === "tickerMatcher") {
+        return "active";
+      }
     }
 
     return "";

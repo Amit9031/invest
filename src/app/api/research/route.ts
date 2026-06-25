@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
           );
 
           let finalState: any = {};
+          const completedNodes: string[] = [];
 
           for await (const update of eventStream) {
             // update has the format { [nodeName]: statePatch }
@@ -51,6 +52,9 @@ export async function POST(req: NextRequest) {
               
               // Accumulate final state changes
               finalState = { ...finalState, ...statePatch };
+              if (!completedNodes.includes(nodeName)) {
+                completedNodes.push(nodeName);
+              }
 
               // Extract new logs if any
               const newLogs = statePatch.logs || [];
@@ -67,7 +71,8 @@ export async function POST(req: NextRequest) {
               sendEvent("progress", {
                 agent: friendlyName,
                 log: lastLog,
-                currentAgent: statePatch.currentAgent || finalState.currentAgent,
+                currentAgent: nodeName,
+                completedNodes,
                 ticker: finalState.ticker,
                 isPublic: finalState.isPublic,
               });

@@ -109,7 +109,6 @@ export async function financialAnalystNode(state: ResearchState) {
   
   if (!state.isPublic || !state.ticker) {
     return {
-      currentAgent: "Investment Committee",
       logs: [`${logPrefix}Skipped financial statement node (not a public company).`]
     };
   }
@@ -157,7 +156,6 @@ Keep your report concise (approx 250-300 words), formatted in Markdown.
 
     return {
       financials: financialsUpdated,
-      currentAgent: "Investment Committee",
       logs: [
         `${logPrefix}Completed quantitative analysis of ${state.ticker}. Highlighted metrics: P/E of ${financials.peRatio || "N/A"}, Profit Margin of ${financials.profitMargins ? financials.profitMargins.toFixed(1) + "%" : "N/A"}, and YoY Revenue Growth of ${financials.revenueGrowth ? financials.revenueGrowth.toFixed(1) + "%" : "N/A"}.`
       ]
@@ -231,7 +229,6 @@ ${growthSummary}
 
     return {
       financials: financialsUpdated,
-      currentAgent: "Investment Committee",
       logs: [
         `${logPrefix}Completed rules-based quantitative evaluation of ${state.ticker}. (Fallback mode active)`
       ]
@@ -295,7 +292,6 @@ Is the overall news sentiment Bullish, Bearish, or Neutral? Respond with exactly
     return {
       news: [response.content as string],
       sentiment: sentimentVal || "Neutral",
-      currentAgent: "Investment Committee",
       logs: [
         `${logPrefix}Fetched and processed ${newsResults.length + competitorResults.length} web search results. Identified market sentiment as "${sentimentVal || "Neutral"}".`
       ]
@@ -327,7 +323,6 @@ Is the overall news sentiment Bullish, Bearish, or Neutral? Respond with exactly
     return {
       news: [mockNewsAnalysis],
       sentiment: sentimentVal,
-      currentAgent: "Investment Committee",
       logs: [
         `${logPrefix}Compiled rules-based market intelligence report. Identified sentiment as "${sentimentVal}". (Fallback mode active)`
       ]
@@ -381,7 +376,6 @@ Be critical, objective, and realistic. Write a clean markdown list under 250 wor
 
     return {
       risks: risksList.length > 0 ? risksList : [response.content as string],
-      currentAgent: "Investment Committee",
       logs: [
         `${logPrefix}Completed downside risk assessment. Identified ${risksList.length || 3} critical vulnerability vectors including industry-wide and asset-specific exposures.`
       ]
@@ -405,7 +399,6 @@ Be critical, objective, and realistic. Write a clean markdown list under 250 wor
 
     return {
       risks: fallbackRisks,
-      currentAgent: "Investment Committee",
       logs: [
         `${logPrefix}Completed downside risk assessment. Identified ${fallbackRisks.length} key risk exposures based on corporate financials. (Fallback mode active)`
       ]

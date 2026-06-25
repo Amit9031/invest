@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [status, setStatus] = useState<"idle" | "running" | "completed" | "error">("idle");
   const [error, setError] = useState("");
   const [currentAgent, setCurrentAgent] = useState("");
+  const [completedNodes, setCompletedNodes] = useState<string[]>([]);
   const [ticker, setTicker] = useState("");
   const [isPublic, setIsPublic] = useState<boolean | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -48,6 +49,7 @@ export default function Dashboard() {
     setTicker("");
     setIsPublic(null);
     setCurrentAgent("tickerMatcher");
+    setCompletedNodes([]);
 
     addLog("System", `Initiating investment research request for "${nameToSearch}"...`, "system");
 
@@ -105,6 +107,7 @@ export default function Dashboard() {
 
               if (eventName === "progress") {
                 setCurrentAgent(data.currentAgent || "");
+                if (data.completedNodes) setCompletedNodes(data.completedNodes);
                 if (data.ticker) setTicker(data.ticker);
                 if (data.isPublic !== undefined) setIsPublic(data.isPublic);
                 
@@ -115,6 +118,13 @@ export default function Dashboard() {
                 setTicker(data.ticker || "");
                 setIsPublic(data.isPublic);
                 setCurrentAgent("Complete");
+                setCompletedNodes(prev => {
+                  const updated = [...prev];
+                  if (!updated.includes("investmentCommittee")) {
+                    updated.push("investmentCommittee");
+                  }
+                  return updated;
+                });
                 setStatus("completed");
                 addLog("System", "Research workflow terminated successfully. Report generated.", "success");
               } else if (eventName === "error") {
@@ -209,6 +219,7 @@ export default function Dashboard() {
         {/* Agent Monitor Panel */}
         <AgentMonitor
           currentAgent={currentAgent}
+          completedNodes={completedNodes}
           logs={logs}
           isPublic={isPublic}
           ticker={ticker}
