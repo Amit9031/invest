@@ -9,7 +9,6 @@ export function getLLM(): BaseChatModel {
   if (geminiApiKey) {
     return new ChatGoogleGenerativeAI({
       model: "gemini-2.5-flash",
-      modelName: "gemini-2.5-flash",
       temperature: 0.1,
       maxOutputTokens: 2048,
       apiKey: geminiApiKey,
@@ -17,7 +16,6 @@ export function getLLM(): BaseChatModel {
   } else if (openaiApiKey) {
     return new ChatOpenAI({
       model: "gpt-4o-mini",
-      modelName: "gpt-4o-mini",
       temperature: 0.1,
       apiKey: openaiApiKey,
     });
@@ -27,7 +25,6 @@ export function getLLM(): BaseChatModel {
     console.warn("WARNING: No LLM API keys found in environment variables. Falling back to mock/Gemini default.");
     return new ChatGoogleGenerativeAI({
       model: "gemini-2.5-flash",
-      modelName: "gemini-2.5-flash",
       temperature: 0.1,
       apiKey: "placeholder",
     });
