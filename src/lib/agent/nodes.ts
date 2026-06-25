@@ -472,15 +472,17 @@ The report should have:
 - **Financial & Market Strength**: Summary table and evaluation.
 - **Final Verdict**: Explicit summary reasoning.
 
-Respond ONLY with a JSON block in this structure:
-\`\`\`json
-{
-  "decision": "INVEST" | "PASS" | "HOLD",
-  "rating": "string",
-  "confidence": number,
-  "report": "detailed markdown report string"
-}
-\`\`\`
+Respond by prefixing your markdown report with exactly these three metadata headers at the very top (case-sensitive), followed by your markdown report:
+[DECISION]: <INVEST or PASS or HOLD>
+[RATING]: <Strong Buy, Buy, Hold, Sell, or Strong Sell>
+[CONFIDENCE]: <number between 0 and 100>
+
+Example Output Format:
+[DECISION]: INVEST
+[RATING]: Buy
+[CONFIDENCE]: 85
+
+# INVESTMENT RESEARCH REPORT: ...
 `;
 
   try {
@@ -489,21 +491,35 @@ Respond ONLY with a JSON block in this structure:
       new HumanMessage(prompt)
     ]);
 
-    const parsed = parseJsonFromResponse(response.content as string);
+    const content = response.content as string;
+    const decisionMatch = content.match(/\[DECISION\]:\s*(INVEST|PASS|HOLD)/i);
+    const ratingMatch = content.match(/\[RATING\]:\s*([^\n\r]+)/i);
+    const confidenceMatch = content.match(/\[CONFIDENCE\]:\s*(\d+)/i);
 
-    if (parsed && parsed.decision && parsed.report) {
+    if (decisionMatch && ratingMatch && confidenceMatch) {
+      const decisionVal = decisionMatch[1].toUpperCase().trim() as "INVEST" | "PASS" | "HOLD";
+      const ratingVal = ratingMatch[1].replace(/[\[\]]/g, "").trim();
+      const confidenceVal = parseInt(confidenceMatch[1].trim());
+      
+      // Clean up the metadata block from the report so it displays cleanly in the UI
+      const cleanReport = content
+        .replace(/\[DECISION\]:\s*(INVEST|PASS|HOLD)/gi, "")
+        .replace(/\[RATING\]:\s*[^\n]+/gi, "")
+        .replace(/\[CONFIDENCE\]:\s*\d+/gi, "")
+        .trim();
+
       return {
-        decision: parsed.decision,
-        rating: parsed.rating || "Hold",
-        confidence: parsed.confidence || 50,
-        report: parsed.report,
+        decision: decisionVal,
+        rating: ratingVal || "Hold",
+        confidence: confidenceVal || 70,
+        report: cleanReport,
         currentAgent: "Complete",
         logs: [
-          `${logPrefix}Investment Committee has votend. Decision: **${parsed.decision}** with a rating of **${parsed.rating}** (Confidence: ${parsed.confidence}%). Thesis and report generated successfully.`
+          `${logPrefix}Investment Committee has voted. Decision: **${decisionVal}** with a rating of **${ratingVal}** (Confidence: ${confidenceVal}%). Thesis and report generated successfully.`
         ]
       };
     } else {
-      throw new Error("Failed to parse expected JSON schema from LLM.");
+      throw new Error("Failed to parse expected metadata headers from LLM markdown response.");
     }
   } catch (error) {
     console.warn("Investment Committee Node LLM call failed. Invoking fallback synthesis engine:", error);
