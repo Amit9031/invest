@@ -17,26 +17,19 @@ const workflow = new StateGraph(ResearchStateAnnotation)
   .addNode("riskAnalyst", riskAnalystNode)
   .addNode("investmentCommittee", investmentCommitteeNode)
 
-  // Set the entry point
-  .addEdge(START, "tickerMatcher");
+// Connect the entry point
+workflow.addEdge(START, "tickerMatcher");
 
-// Add conditional edge from tickerMatcher
-// If it is a public company, analyze financials. Otherwise, skip to web news search.
-workflow.addConditionalEdges(
-  "tickerMatcher",
-  (state) => {
-    return state.isPublic ? "financialAnalyst" : "webResearcher";
-  },
-  {
-    financialAnalyst: "financialAnalyst",
-    webResearcher: "webResearcher",
-  }
-);
+// Fan-out from tickerMatcher to all analysis nodes in parallel
+workflow.addEdge("tickerMatcher", "financialAnalyst");
+workflow.addEdge("tickerMatcher", "webResearcher");
+workflow.addEdge("tickerMatcher", "riskAnalyst");
 
-// Connect the remaining nodes in sequence
-workflow.addEdge("financialAnalyst", "webResearcher");
-workflow.addEdge("webResearcher", "riskAnalyst");
+// Fan-in from all analysis nodes to the Investment Committee
+workflow.addEdge("financialAnalyst", "investmentCommittee");
+workflow.addEdge("webResearcher", "investmentCommittee");
 workflow.addEdge("riskAnalyst", "investmentCommittee");
+
 workflow.addEdge("investmentCommittee", END);
 
 // Compile the graph
